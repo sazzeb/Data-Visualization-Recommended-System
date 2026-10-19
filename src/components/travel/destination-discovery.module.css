@@ -1,0 +1,693 @@
+
+.discover {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  margin-bottom: 18px;
+}
+
+.discoveryPanel,
+.relatedPanel {
+  background: #fff;
+  border: 1px solid #e1e8eb;
+  border-radius: 16px;
+  padding: clamp(16px, 2.3vw, 25px);
+  min-width: 0;
+  box-shadow: 0 3px 14px #102d1c07;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #007a32;
+}
+
+.sectionHeading h2 {
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 800;
+  letter-spacing: -.6px;
+  margin: 5px 0 7px;
+  color: #172321;
+}
+
+.sectionHeading p {
+  font-size: 12px;
+  color: #657586;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 630px;
+}
+
+.recordTag {
+  font-size: 11px;
+  font-weight: 700;
+  background: #e8f5ed;
+  color: #00682a;
+  border-radius: 20px;
+  padding: 8px 11px;
+  white-space: nowrap;
+}
+
+.routeSummary {
+  background: linear-gradient(115deg, #063e28, #006b38);
+  border-radius: 13px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    52px
+    minmax(0, 1fr)
+    minmax(140px, .8fr);
+  gap: 12px;
+  align-items: center;
+  color: #fff;
+  margin-bottom: 22px;
+}
+
+.routePlace {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.routePlace .eyebrow {
+  color: #b2f9d0;
+}
+
+.routePlace strong {
+  font-size: clamp(17px, 2.2vw, 23px);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.routePlace small {
+  font-size: 11px;
+  color: #d8efe4;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.routeLine {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #b5ffcf;
+}
+
+.routeLine span {
+  height: 1px;
+  background: #84e3a7;
+  flex: 1;
+}
+
+.routePrice {
+  border-left: 1px solid #ffffff4a;
+  padding-left: 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routePrice span {
+  font-size: 10px;
+  color: #c9e5d5;
+}
+
+.routePrice strong {
+  font-size: 20px;
+}
+
+.tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 7px;
+  padding-bottom: 7px;
+  scrollbar-width: thin;
+  margin-bottom: 15px;
+}
+
+.tabs button {
+  font-size: 12px;
+  border: 1px solid #e0e8e6;
+  border-radius: 9px;
+  background: #f5f7f8;
+  padding: 10px 13px;
+  color: #43556a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabs button:hover {
+  background: #e7f5eb;
+  border-color: #b5ddc2;
+}
+
+.tabs button.tabActive {
+  color: white;
+  border-color: #007a32;
+  background: #007a32;
+}
+
+.categoryHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 13px 0 14px;
+}
+
+.categoryHeading h3 {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 5px;
+}
+
+.categoryHeading p {
+  font-size: 11px;
+  color: #6c7d8a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.categoryHeading > span {
+  font-size: 10px;
+  font-weight: 800;
+  color: #007a32;
+  white-space: nowrap;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.discoveryCard {
+  padding: 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e0e8ec;
+  text-align: left;
+  overflow: hidden;
+  min-width: 0;
+  color: #172321;
+  animation: cardUp .36s ease both;
+  display: flex;
+  flex-direction: column;
+  transition:
+    box-shadow .18s ease,
+    border-color .18s ease,
+    transform .18s ease;
+}
+
+.discoveryCard:hover {
+  box-shadow: 0 9px 25px #183c291c;
+  border-color: #91d2a8;
+  transform: translateY(-2px);
+}
+
+.discoveryCard:focus-visible,
+.relatedCard:focus-visible,
+.tabs button:focus-visible,
+.primaryAction:focus-visible {
+  outline: 3px solid #83cfa4;
+  outline-offset: 2px;
+}
+
+.cover {
+  height: 157px;
+  width: 100%;
+  background-color: #dceee4;
+  background-position: center;
+  background-size: cover;
+  position: relative;
+}
+
+.coverTag {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  border-radius: 6px;
+  background: #ffffffec;
+  color: #006a30;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.coverNote {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  color: #fff;
+  background: #0009;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 9px;
+}
+
+.cardBody {
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 128px;
+  flex: 1;
+}
+
+.cardHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 6px;
+}
+
+.cardHeading strong {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.cardHeading svg {
+  flex: 0 0 16px;
+  color: #007a32;
+}
+
+.cardBody > small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #667788;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.cardBody > small svg {
+  flex: 0 0 12px;
+}
+
+.cardFooter {
+  border-top: 1px solid #edf2ef;
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardFooter span {
+  font-size: 9px;
+  color: #778496;
+  line-height: 1.3;
+}
+
+.cardFooter b {
+  font-size: 13px;
+  color: #007a32;
+  white-space: nowrap;
+}
+
+.disclaimer {
+  font-size: 10px;
+  color: #708093;
+  line-height: 1.55;
+  margin: 14px 0 0;
+}
+
+.emptyCategory {
+  min-height: 164px;
+  background: #f7faf8;
+  border: 1px dashed #cadcd1;
+  border-radius: 11px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 9px;
+  color: #597068;
+}
+
+.emptyCategory strong {
+  font-size: 13px;
+}
+
+.emptyCategory span {
+  font-size: 11px;
+  max-width: 370px;
+  line-height: 1.6;
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.relatedCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e3e9ee;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: left;
+  min-width: 0;
+  color: #172321;
+}
+
+.relatedCard:hover {
+  border-color: #85cba0;
+  background: #f4faf6;
+}
+
+.relatedImage {
+  flex: 0 0 67px;
+  width: 67px;
+  height: 65px;
+  border-radius: 7px;
+  background: #d9e7df center/cover;
+}
+
+.relatedCopy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relatedCopy strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.relatedCopy small {
+  font-size: 10px;
+  color: #738196;
+  line-height: 1.3;
+}
+
+.relatedCopy > span {
+  font-size: 10px;
+  color: #607388;
+}
+
+.relatedCopy > span b {
+  color: #143323;
+}
+
+.relatedRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: #007a32;
+  text-align: right;
+}
+
+.relatedRight > b {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.relatedRight small {
+  font-size: 9px;
+  color: #8b98a5;
+  white-space: nowrap;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #07190fc9;
+  padding: 16px;
+  display: grid;
+  place-items: center;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 17px;
+  max-width: 550px;
+  width: 100%;
+  max-height: min(92vh, 950px);
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 80px #0004;
+}
+
+.closeModal {
+  position: absolute;
+  z-index: 1;
+  right: 12px;
+  top: 12px;
+  background: white;
+  border: 1px solid #e2e9e5;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1a2c23;
+}
+
+.modal > .cover {
+  height: 210px;
+}
+
+.modalContent {
+  padding: 24px;
+}
+
+.modalContent h3 {
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 7px 0 9px;
+}
+
+.modalLocation {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #657586;
+  font-size: 12px;
+  margin: 0 0 15px;
+}
+
+.modalDescription {
+  font-size: 13px;
+  color: #3d5060;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.routeDetail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #edf8f0;
+  padding: 12px;
+  border-radius: 9px;
+  margin: 12px 0;
+}
+
+.routeDetail > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routeDetail > div span {
+  font-size: 10px;
+  color: #007a32;
+}
+
+.routeDetail strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.routeDetail svg {
+  flex: 0 0 18px;
+}
+
+.priceDetails {
+  border: 1px solid #e4eee8;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 17px 0;
+}
+
+.priceDetails > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eaf1ed;
+  font-size: 12px;
+}
+
+.priceDetails > div:last-child {
+  border-bottom: 0;
+}
+
+.priceDetails > div span {
+  color: #617688;
+}
+
+.priceDetails strong {
+  font-weight: 800;
+  color: #007a32;
+}
+
+.modalCaution {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #6c7c89;
+  margin: 12px 0;
+}
+
+.primaryAction {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: #007a32;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 13px 10px;
+}
+
+.primaryAction:hover {
+  background: #005f28;
+}
+
+@keyframes cardUp {
+  from {
+    opacity: .3;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .routeSummary {
+    grid-template-columns:
+      1fr 35px 1fr;
+  }
+
+  .routePrice {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid #ffffff4a;
+    padding: 12px 0 0;
+  }
+
+  .cardGrid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .routeSummary {
+    padding: 15px;
+    gap: 8px;
+  }
+
+  .routePlace strong {
+    font-size: 17px;
+  }
+
+  .relatedGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardGrid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .cover {
+    height: 130px;
+  }
+
+  .relatedImage {
+    flex-basis: 62px;
+    width: 62px;
+  }
+}
+
+@media (max-width: 440px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cover {
+    height: 170px;
+  }
+
+  .routeSummary {
+    grid-template-columns:
+      minmax(0, 1fr)
+      25px
+      minmax(0, 1fr);
+  }
+
+  .routeLine svg {
+    width: 15px;
+  }
+
+  .routePrice strong {
+    font-size: 17px;
+  }
+
+  .relatedRight small {
+    display: none;
+  }
+
+  .modalContent {
+    padding: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discoveryCard {
+    animation: none;
+    transition: none;
+  }
+
+  .discoveryCard:hover {
+    transform: none;
+  }
+}

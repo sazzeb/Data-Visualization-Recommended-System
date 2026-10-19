@@ -1,0 +1,82 @@
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.step-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: $spacing-6;
+  margin-top: $spacing-12;
+  padding: $spacing-6 0;
+
+  border-top: 1px solid $color-border;
+}
+
+.back-button {
+  @include interactive;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+
+  padding: $spacing-3 $spacing-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  background: $color-white;
+  color: $color-text;
+}
+
+.primary-button {
+  @include interactive;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+
+  padding: $spacing-3 $spacing-6;
+  border: 1px solid $color-primary;
+  border-radius: $radius-md;
+
+  background: $color-primary;
+  color: $color-white;
+  font-weight: $font-weight-semibold;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+  }
+}
+
+.footer-progress {
+  flex: 1;
+  max-width: 280px;
+  height: 6px;
+  overflow: hidden;
+
+  border-radius: $radius-full;
+  background: $color-border;
+
+  span {
+    display: block;
+    height: 100%;
+    background: $color-primary;
+    transition: width $transition-normal;
+  }
+}
+
+@include mobile {
+  .step-footer {
+    gap: $spacing-3;
+    margin-top: $spacing-8;
+  }
+
+  .back-button,
+  .primary-button {
+    padding: $spacing-3;
+    font-size: $font-size-sm;
+  }
+}

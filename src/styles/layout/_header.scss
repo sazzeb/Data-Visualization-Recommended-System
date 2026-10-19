@@ -1,0 +1,208 @@
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.site-header {
+  position: relative;
+  z-index: $z-header;
+  background: $color-white;
+  border-bottom: 1px solid $color-border;
+}
+
+.topbar {
+  position: relative;
+  @include flex-between;
+
+  min-height: $header-height;
+  padding: $spacing-3 $spacing-8;
+  gap: $spacing-6;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-6;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-3;
+
+  padding: 0;
+  border: 0;
+  background: transparent;
+
+  color: $color-black;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+
+  &-mark {
+    @include flex-center;
+
+    width: 42px;
+    height: 42px;
+    border-radius: $radius-md;
+    background: $color-primary;
+    color: $color-white;
+  }
+
+  &-green {
+    color: $color-primary;
+  }
+}
+
+.navigation-toggle {
+  @include interactive;
+
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  background: $color-white;
+  color: $color-text;
+
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  &:hover,
+  &--active {
+    background: $color-primary-light;
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+
+  button {
+    @include interactive;
+
+    padding: $spacing-2 $spacing-3;
+    border: 0;
+    border-radius: $radius-md;
+    background: transparent;
+    color: $color-text-muted;
+
+    &:hover,
+    &.nav-active {
+      color: $color-primary;
+      background: $color-primary-light;
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.profile-button,
+.mobile-menu-button {
+  @include flex-center;
+  @include interactive;
+
+  width: 40px;
+  height: 40px;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-white;
+  color: $color-text;
+
+  &:hover {
+    background: $color-surface-hover;
+  }
+}
+
+.mobile-menu-button {
+  display: none;
+}
+
+.profile-popover {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: $spacing-8;
+  z-index: $z-header;
+
+  width: 260px;
+  padding: $spacing-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+
+  background: $color-white;
+  box-shadow: $shadow-md;
+
+  p {
+    margin: $spacing-3 0;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+  }
+
+  button {
+    width: 100%;
+    padding: $spacing-3;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    background: $color-surface;
+    text-align: left;
+  }
+}
+
+.mobile-nav {
+  display: none;
+}
+
+@include tablet {
+  .topbar {
+    padding: $spacing-3 $spacing-4;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-menu-button {
+    display: flex;
+  }
+
+  .brand-group {
+    gap: $spacing-3;
+  }
+
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-3 $spacing-4;
+    border-top: 1px solid $color-border;
+    background: $color-white;
+
+    button {
+      padding: $spacing-3;
+      border: 0;
+      background: transparent;
+      text-align: left;
+    }
+  }
+}
+
+@include mobile {
+  .brand {
+    font-size: $font-size-lg;
+  }
+
+  .navigation-toggle span {
+    display: none;
+  }
+
+  .profile-popover {
+    right: $spacing-3;
+  }
+}

@@ -1,0 +1,80 @@
+
+@use "../abstracts/variables" as *;
+@use "../abstracts/mixins" as *;
+
+.site {
+  min-height: 100vh;
+  background: $color-white;
+}
+
+.workspace {
+  display: flex;
+  min-height: calc(100vh - #{$header-height});
+  width: 100%;
+
+  &--collapsed {
+    .main-area {
+      width: 100%;
+    }
+  }
+
+  &--expanded {
+    .main-area {
+      min-width: 0;
+      flex: 1;
+    }
+  }
+}
+
+.main-area {
+  min-width: 0;
+  padding: $spacing-8;
+  margin: 0 auto;
+}
+
+.step-content {
+  width: 100%;
+  animation: step-enter $transition-slow both;
+}
+
+.step-kicker {
+  @include flex-between;
+
+  gap: $spacing-4;
+  margin-bottom: $spacing-6;
+
+  color: $color-text-muted;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.04em;
+}
+
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@include tablet {
+  .main-area {
+    width: 100%;
+    padding: $spacing-5;
+  }
+}
+
+@include mobile {
+  .main-area {
+    padding: $spacing-4;
+  }
+
+  .step-kicker {
+    flex-wrap: wrap;
+    margin-bottom: $spacing-4;
+  }
+}

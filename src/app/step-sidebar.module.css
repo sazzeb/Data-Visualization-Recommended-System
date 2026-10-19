@@ -1,0 +1,174 @@
+
+/* Shared sidebar toggle */
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+  min-width: 0;
+}
+
+.navigationToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 9px 12px;
+  border: 1px solid #d9e7de;
+  border-radius: 9px;
+  background: #f4faf6;
+  color: #007a32;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.navigationToggle:hover,
+.navigationToggleActive {
+  border-color: #78c79c;
+  background: #e3f4e9;
+}
+
+/* Desktop workspace layout */
+
+.layoutCollapsed:global(.workspace) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.layoutExpanded:global(.workspace) {
+  grid-template-columns:
+    252px minmax(0, 1fr);
+}
+
+/* Sidebar header and close button */
+
+.sidebarHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebarHeading :global(.rail-eyebrow) {
+  margin: 0;
+}
+
+.sidebarClose {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e0e9e3;
+  border-radius: 7px;
+  color: #007a32;
+  background: #f5faf6;
+}
+
+.sidebarClose:hover {
+  background: #e3f4e9;
+}
+
+/* Mobile backdrop is hidden on desktop. */
+
+.mobileBackdrop {
+  display: none;
+}
+
+/* Smaller desktop screens */
+
+@media (max-width: 1190px) and (min-width: 1001px) {
+  .layoutExpanded:global(.workspace) {
+    grid-template-columns:
+      215px minmax(0, 1fr);
+  }
+}
+
+/* Tablet and mobile drawer */
+
+@media (max-width: 1000px) {
+  .layoutExpanded:global(.workspace),
+  .layoutCollapsed:global(.workspace) {
+    display: block;
+  }
+
+  .mobileBackdrop {
+    position: fixed;
+    inset: 72px 0 0;
+    display: block;
+    width: 100%;
+    border: 0;
+    background: rgba(
+      10,
+      26,
+      20,
+      0.38
+    );
+    z-index: 35;
+    cursor: default;
+  }
+
+  .sidebarPanel:global(.step-sidebar) {
+    display: flex;
+    position: fixed;
+    left: 0;
+    top: 72px;
+    z-index: 38;
+
+    width: min(
+      310px,
+      calc(100vw - 48px)
+    );
+
+    height: calc(100dvh - 72px);
+    max-height: calc(100dvh - 72px);
+
+    overflow-y: auto;
+    padding: 25px 16px 24px;
+
+    box-shadow:
+      12px 4px 25px
+      rgba(11, 36, 24, 0.16);
+  }
+}
+
+/* Small phones */
+
+@media (max-width: 680px) {
+  .brandGroup {
+    gap: 12px;
+  }
+
+  .navigationToggle {
+    padding: 9px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .navigationToggle span {
+    display: none;
+  }
+
+  .mobileBackdrop {
+    top: 61px;
+  }
+
+  .sidebarPanel:global(.step-sidebar) {
+    top: 61px;
+    height: calc(100dvh - 61px);
+    max-height: calc(100dvh - 61px);
+  }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .navigationToggle {
+    transition: none;
+  }
+}

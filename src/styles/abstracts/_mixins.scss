@@ -1,0 +1,60 @@
+
+@use "variables" as *;
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin card {
+  background: $color-white;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+}
+
+@mixin interactive {
+  cursor: pointer;
+  transition:
+    background-color $transition-normal,
+    border-color $transition-normal,
+    color $transition-normal,
+    transform $transition-normal;
+
+  &:focus-visible {
+    outline: 3px solid $color-primary;
+    outline-offset: 3px;
+  }
+}
+
+@mixin mobile {
+  @media (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+@mixin line-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  overflow: hidden;
+}

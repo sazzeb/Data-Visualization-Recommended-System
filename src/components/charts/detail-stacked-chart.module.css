@@ -1,0 +1,314 @@
+
+.panel {
+  border: 1px solid #e2e9ec;
+  border-radius: 14px;
+  padding: clamp(14px, 2vw, 24px);
+  background: #fff;
+  margin-bottom: 18px;
+  min-width: 0;
+}
+
+.header,
+.cityHeading,
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header h2 {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 800;
+  margin: 0 0 7px;
+}
+
+.header p {
+  font-size: 12px;
+  color: #657487;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.header p strong {
+  color: #10281c;
+}
+
+.badge {
+  border-radius: 30px;
+  padding: 8px 11px;
+  background: #eaf7ef;
+  color: #007a32;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin: 18px 0 20px;
+}
+
+.groupPicker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.groupPicker legend,
+.comparePicker {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4d6376;
+  margin-bottom: 7px;
+}
+
+.groupPicker > div {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.groupPicker button {
+  background: #f4f6f8;
+  border: 1px solid #e3e8ee;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #34475a;
+  font-weight: 700;
+}
+
+.groupPicker button.active {
+  background: #007a32;
+  color: white;
+  border-color: #007a32;
+}
+
+.comparePicker {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.comparePicker select {
+  height: 36px;
+  min-width: 185px;
+  max-width: 270px;
+  border: 1px solid #d8e2e8;
+  border-radius: 7px;
+  background: white;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.citySection {
+  margin: 14px 0 20px;
+}
+
+.cityHeading {
+  border-bottom: 1px solid #e3e9ed;
+  padding-bottom: 10px;
+  margin-bottom: 17px;
+  align-items: center;
+}
+
+.cityHeading h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.cityHeading span {
+  font-size: 10px;
+  color: #657487;
+}
+
+.group {
+  margin: 0 0 20px;
+}
+
+.groupHeader {
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.groupHeader h4 {
+  font-size: 12px;
+  font-weight: 800;
+  color: #183126;
+  margin: 0;
+}
+
+.groupHeader small {
+  font-size: 10px;
+  color: #657487;
+}
+
+.scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.canvas {
+  min-width: 900px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns:
+    205px minmax(0, 1fr) 68px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.rowHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rowHeading strong {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rowHeading small {
+  font-size: 10px;
+  color: #718195;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.track {
+  height: 43px;
+  background-image: linear-gradient(
+    to right,
+    #e6ebee 1px,
+    transparent 1px
+  );
+  background-size: 25% 100%;
+}
+
+.stack {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  border-radius: 5px;
+  animation:
+    reveal 700ms
+    cubic-bezier(.2, .8, .2, 1)
+    both;
+  animation-delay: var(
+    --delay,
+    0ms
+  );
+}
+
+.segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-right: 1px solid #ffffffa1;
+  min-width: 0;
+  color: white;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0 2px;
+  line-height: 1.15;
+}
+
+.segment span {
+  font-size: 9px;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
+.segment b {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rowTotal {
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.axis {
+  display: grid;
+  grid-template-columns:
+    205px minmax(0, 1fr) 68px;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.axis > div {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #aab6bf;
+  padding-top: 7px;
+  color: #8391a1;
+  font-size: 10px;
+}
+
+.note {
+  background: #f6faf7;
+  border: 1px solid #deece3;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #536678;
+}
+
+.note strong {
+  color: #1c3527;
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: .5;
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .canvas {
+    min-width: 870px;
+  }
+
+  .header h2 {
+    font-size: 16px;
+  }
+
+  .panel {
+    padding: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack {
+    animation: none;
+  }
+}
