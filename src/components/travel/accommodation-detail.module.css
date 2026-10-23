@@ -1,0 +1,24 @@
+.others { margin: 28px 0; padding: clamp(20px, 3vw, 30px); border: 1px solid #deebe2; border-radius: 22px; background: linear-gradient(145deg, #f4faf5, #fff 55%); }
+.heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; margin-bottom: 20px; }
+.heading span { display: inline-flex; align-items: center; gap: 7px; color: #087443; font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+.heading h2 { margin: 7px 0 5px; font-size: clamp(22px, 2.7vw, 31px); letter-spacing: -.035em; }
+.heading p { margin: 0; color: #687c70; font-size: 13px; }
+.heading b { border-radius: 999px; padding: 8px 11px; color: #087443; background: #e3f2e8; font-size: 11px; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr)); gap: 14px; }
+.card { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: 10px; min-width: 0; padding: 20px; border: 1px solid #dce9e0; border-radius: 17px; background: #fff; color: #173126; cursor: pointer; box-shadow: 0 6px 19px #1643250b; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.card:hover, .card:focus-visible { transform: translateY(-3px); border-color: #58b77c; box-shadow: 0 12px 28px #16432520; }
+.card:focus-visible { outline: 3px solid #79c99b; outline-offset: 2px; }
+.cardTop { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rank { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 10px; background: #087443; color: #fff; font-weight: 800; font-size: 12px; }
+.fit { padding: 6px 9px; border-radius: 999px; background: #e8f5eb; color: #087443; font-weight: 700; font-size: 11px; }
+.card h3 { margin: 4px 0 0; font-size: 19px; line-height: 1.24; }
+.location { display: flex; gap: 5px; align-items: flex-start; margin: 0; color: #65776b; font-size: 12px; }
+.location svg { flex: 0 0 auto; }
+.stats { display: flex; flex-wrap: wrap; gap: 7px; }
+.stats span { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border-radius: 8px; background: #f3f7f3; color: #496757; font-size: 11px; }
+.costs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; padding-top: 15px; border-top: 1px solid #e8eee9; }
+.costs div { display: grid; gap: 5px; }
+.costs small { color: #748579; font-size: 10px; }
+.costs strong { color: #0c6640; font-size: 16px; }
+.cardAction { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; color: #087443; font-size: 12px; font-weight: 800; }
+@media (max-width: 600px) { .heading { align-items: flex-start; flex-direction: column; } }

@@ -17,19 +17,25 @@ import type { TravelCountryRecord } from
 
 type RecommendationPreviewProps = {
   plan: TravelPlan;
+  requestKey: string;
+  cachedResult: RecommendationResponse | null;
+  onResult: (key: string, result: RecommendationResponse) => void;
   onReady: (ready: boolean) => void;
   onOpenDestination: (row: TravelCountryRecord) => void;
 };
 
 export function RecommendationPreview({
   plan,
+  requestKey,
+  cachedResult,
+  onResult,
   onReady,
   onOpenDestination,
 }: RecommendationPreviewProps) {
   const [result, setResult] =
-    useState<RecommendationResponse | null>(null);
+    useState<RecommendationResponse | null>(cachedResult);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedResult);
   const [progress, setProgress] = useState(0);
   const [workCompleted, setWorkCompleted] = useState<number | null>(
     null
@@ -38,14 +44,17 @@ export function RecommendationPreview({
   const [status, setStatus] = useState(
     "Starting recommendation search..."
   );
-  const requestKey = JSON.stringify({
-    countries: plan.countries,
-    accommodationChoices: plan.accommodationChoices,
-    recommendationFilters:
-      plan.recommendationFilters,
-  });
-
   useEffect(() => {
+    if (cachedResult) {
+      setResult(cachedResult);
+      setError("");
+      setLoading(false);
+      setProgress(100);
+      setStatus("Recommendations ready");
+      onReady(true);
+      return;
+    }
+
     const controller = new AbortController();
     let active = true;
 
@@ -73,7 +82,10 @@ export function RecommendationPreview({
     })
       .then(async response => {
         if (!response.ok) {
-          throw new Error(`Recommendation request failed (${response.status}).`);
+          const payload = await response.json().catch(() => null) as
+            { error?: string } | null;
+          throw new Error(payload?.error ||
+            `Recommendation request failed (${response.status}).`);
         }
 
         if (!response.body) {
@@ -143,6 +155,7 @@ export function RecommendationPreview({
               setProgress(100);
               setStatus("Recommendations ready");
               setLoading(false);
+              onResult(requestKey, event.result);
               onReady(true);
             } else {
               throw new Error(event.message);
@@ -180,7 +193,7 @@ export function RecommendationPreview({
       active = false;
       controller.abort();
     };
-  }, [onReady, requestKey]);
+  }, [cachedResult, onReady, onResult, requestKey]);
 
   const processingStage =
     progress < 20
@@ -306,19 +319,20 @@ export function RecommendationPreview({
       )}
 
       {result && result.firstRecommendation && (
-        <DestinationOverview
-          plan={plan}
-          recommendations={result}
-          onOpenDestination={onOpenDestination}
-        />
+        <>
+          <DestinationOverview
+            plan={plan}
+            recommendations={result}
+            onOpenDestination={onOpenDestination}
+          />
+        </>
       )}
 
       {result && !result.firstRecommendation && !loading && !error && (
         <div className="content-panel error-panel">
           <p>
-            No complete recommendation matched every selected option.
-            Try removing one or two filters, or choose a different
-            accommodation type.
+            No nearby stay has enough activities for every day of this trip.
+            Try another destination, a shorter trip, or a different stay type.
           </p>
         </div>
       )}

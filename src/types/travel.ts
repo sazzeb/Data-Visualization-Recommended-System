@@ -73,6 +73,7 @@ export interface RecommendationItem {
 
 export interface RecommendationItinerary {
   rank: number;
+  score: number;
   budgetFitPercentage: number;
   totalCost: number;
   budget: number;
@@ -81,10 +82,34 @@ export interface RecommendationItinerary {
   travelers: number;
   accommodationCost: number;
   activityCost: number;
+  unpricedActivityCount: number;
   transportCost: number;
+  foodCost: number;
+  localTransportCost: number;
+  roundTripTravelHours: number | null;
+  totalTravelHours: number | null;
+  costNotes: string[];
   distanceKm: number;
   accommodation: RecommendationItem;
   activities: RecommendationItem[];
+  days: {
+    date: string;
+    activities: RecommendationItem[];
+    activityCosts: (number | null)[];
+    activityCost: number;
+    foodVenue: RecommendationItem | null;
+    foodCost: number;
+    foodPriceEstimated: boolean;
+    localTransportCost: number;
+    travelKm: number;
+    travelHours: number;
+    schedule: {
+      activityId: string;
+      startTime: string;
+      endTime: string;
+      timing: "source" | "estimated";
+    }[];
+  }[];
   childRecommendations: Record<string, RecommendationItem[]>;
   transport: RecommendationItem | null;
 }

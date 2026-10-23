@@ -190,6 +190,10 @@ p {
   min-height: calc(100vh - 72px);
 }
 
+.workspace:has(.step-9) {
+  max-width: none;
+}
+
 .step-sidebar {
   padding: 33px 15px 30px 26px;
   border-right: 1px solid var(--line);
@@ -2770,4 +2774,35 @@ p {
     animation: none !important;
     transition: none !important;
   }
+}
+.daily-itineraries {
+  display: grid;
+  gap: 1rem;
+}
+
+.daily-itineraries details {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #d6e3e9;
+  border-radius: 0.75rem;
+}
+
+.daily-itineraries summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.daily-itineraries section {
+  padding-top: 0.75rem;
+}
+
+.daily-itineraries li {
+  margin: 0.5rem 0;
+}
+
+.daily-itineraries pre {
+  max-height: 20rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

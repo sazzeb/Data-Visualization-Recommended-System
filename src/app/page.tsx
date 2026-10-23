@@ -4,6 +4,7 @@
 import {
   useCallback,
   useEffect,
+  useState,
 } from "react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -38,11 +39,71 @@ import {
 import {
   getRecommendationFilterGroups,
 } from "@/data/travel-catalog";
+import type { RecommendationResponse, TravelPlan } from "@/types/travel";
+
+const RECOMMENDATION_CACHE_KEY = "travelwise-recommendations-v1";
+
+function recommendationInputKey(plan: TravelPlan): string {
+  return JSON.stringify({
+    interests: plan.interests,
+    recommendationFilters: plan.recommendationFilters,
+    countries: plan.countries,
+    services: plan.services,
+    activities: plan.activities,
+    accommodation: plan.accommodation,
+    accommodationChoices: plan.accommodationChoices,
+    budget: plan.budget,
+    budgetMode: plan.budgetMode,
+    individualBudgets: plan.individualBudgets,
+    travelerNames: plan.travelerNames,
+    adults: plan.adults,
+    children: plan.children,
+    checkIn: plan.checkIn,
+    checkOut: plan.checkOut,
+    style: plan.style,
+    flexibleDates: plan.flexibleDates,
+  });
+}
 
 export default function Home() {
   const planner = useTravelPlanner();
 
   const { plan, update, goTo, reset } = planner;
+  const [cachedRecommendation, setCachedRecommendation] = useState<{
+    key: string;
+    result: RecommendationResponse;
+  } | null>(null);
+  const requestKey = recommendationInputKey(plan);
+  const cachedResult = cachedRecommendation?.key === requestKey
+    ? cachedRecommendation.result : null;
+  const saveRecommendation = useCallback((key: string, result: RecommendationResponse) => {
+    setCachedRecommendation({ key, result });
+    try {
+      window.sessionStorage.setItem(
+        RECOMMENDATION_CACHE_KEY,
+        JSON.stringify({ key, result })
+      );
+    } catch {
+      // The in-memory result remains available if browser storage is full.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cachedRecommendation) return;
+    try {
+      const saved = window.sessionStorage.getItem(RECOMMENDATION_CACHE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as {
+        key: string;
+        result: RecommendationResponse;
+      };
+      if (parsed.key === requestKey && Array.isArray(parsed.result?.top10)) {
+        setCachedRecommendation(parsed);
+      }
+    } catch {
+      // An invalid or unavailable browser cache should not block the planner.
+    }
+  }, [cachedRecommendation, requestKey]);
   const setRecommendationPreviewReady =
     useCallback(
       (ready: boolean) => {
@@ -87,6 +148,12 @@ export default function Home() {
   }
 
   function restart() {
+    setCachedRecommendation(null);
+    try {
+      window.sessionStorage.removeItem(RECOMMENDATION_CACHE_KEY);
+    } catch {
+      // Session storage may be unavailable in some browsers.
+    }
     reset();
     sidebar.close();
     mobileMenu.close();
@@ -111,7 +178,7 @@ export default function Home() {
     record: TravelCountryRecord
   ) {
     saveDestination(record);
-    navigate(8);
+    navigate(7);
   }
 
   function toggleSidebar() {
@@ -152,7 +219,7 @@ export default function Home() {
       ? plan.accommodationChoices.length > 0 &&
         plan.interests.length > 0
       : plan.step === 6
-      ? plan.recommendationPreviewReady
+      ? Boolean(cachedResult && plan.recommendationPreviewReady)
       : true;
 
   const recommendationGroupCount =
@@ -166,7 +233,6 @@ export default function Home() {
       recommendationGroupCount > 0
     ) {
       update("recommendationFilterIndex", 0);
-      update("recommendationPreviewReady", false);
       navigate(5);
       return;
     }
@@ -207,6 +273,9 @@ export default function Home() {
         return (
           <RecommendationPreview
             plan={plan}
+            requestKey={requestKey}
+            cachedResult={cachedResult}
+            onResult={saveRecommendation}
             onReady={setRecommendationPreviewReady}
             onOpenDestination={openDestination}
           />
@@ -216,6 +285,7 @@ export default function Home() {
         return (
           <AccommodationDetail
             plan={plan}
+            recommendations={cachedResult}
             onSelectDestination={saveDestination}
           />
         );

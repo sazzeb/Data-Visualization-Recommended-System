@@ -4,8 +4,6 @@ import {
 
 import type { TravelPlan } from "@/types/travel";
 
-export const runtime = "nodejs";
-
 type RequestBody = {
   plan?: Partial<TravelPlan>;
   uploads?: {
@@ -19,14 +17,14 @@ export async function POST(request: Request) {
     const body =
       (await request.json()) as RequestBody;
 
-    if (!body.plan) {
+    if (!body || typeof body !== "object" || !body.plan) {
       return Response.json(
         { error: "A travel plan is required." },
         { status: 400 }
       );
     }
 
-    const uploads = (body.uploads ?? [])
+    const uploads = (Array.isArray(body.uploads) ? body.uploads : [])
       .filter(
         file =>
           typeof file.name === "string" &&

@@ -3,6 +3,7 @@ import path from "node:path";
 
 import Papa from "papaparse";
 
+import { COUNTRY_CARDS } from "@/data/travel-catalog";
 import type {
   RecommendationItem,
   RecommendationItinerary,
@@ -20,19 +21,6 @@ type UploadedCsv = {
 type Point = {
   latitude: number;
   longitude: number;
-};
-
-type FilterMatches = ReturnType<typeof filterMatches>;
-
-type ScoredCandidate = {
-  candidate: {
-    source: string;
-    row: CsvRow;
-    matches: FilterMatches;
-  };
-  point: Point;
-  matches: FilterMatches;
-  distance: number;
 };
 
 type ProgressReporter = (
@@ -68,6 +56,7 @@ const RETAINED_COLUMNS = new Set([
   "city_town",
   "country",
   "destination_country",
+  "destination_country_code",
   "venue_country",
   "origin_country",
   "state_region",
@@ -92,6 +81,10 @@ const RETAINED_COLUMNS = new Set([
   "price_currency",
   "price_basis",
   "event_status",
+  "start_date_local",
+  "end_date_local",
+  "start_time_local",
+  "end_time_local",
   "segment",
   "genre",
   "subgenre",
@@ -108,80 +101,108 @@ const RETAINED_COLUMNS = new Set([
   "budget_total_round_trip_transport_usd",
   "standard_economy_round_trip_airfare_usd",
   "round_trip_distance_km",
+  "round_trip_route",
+  "primary_transport_mode",
+  "origin_airport_name",
+  "destination_airport_name",
+  "estimated_nonstop_round_trip_airborne_hours",
+  "outbound_representative_duration",
+  "return_representative_duration",
+  "origin_city",
+  "origin_state_region",
+  "origin_latitude",
+  "origin_longitude",
+  "hotel_nightly_usd",
+  "apartment_nightly_usd",
+  "airbnb_nightly_usd",
+  "entry_fee",
+  "entry_fee_min",
+  "entry_fee_max",
+  "entry_fee_currency",
+  "destination_state_region",
 ]);
 
 let cachedRows:
-  | Promise<{ name: string; rows: CsvRow[] }[]>
+  | { key: string; promise: Promise<{ name: string; rows: CsvRow[] }[]> }
   | undefined;
+let cachedCityPrices: Promise<CsvRow[]> | undefined;
+
+function loadCityPrices(): Promise<CsvRow[]> {
+  cachedCityPrices ??= fs.readFile(path.join(process.cwd(), "public", "datasets", "travel_countries.csv"), "utf8")
+    .then(content => Papa.parse<CsvRow>(content.replace(/^\uFEFF/, ""), {
+      header: true, skipEmptyLines: "greedy"
+    }).data);
+  return cachedCityPrices;
+}
 
 function parseCsv(
   name: string,
-  content: string
+  content: string,
+  selectedCountries: string[] = []
 ): { name: string; rows: CsvRow[] } {
-  const parsed = Papa.parse<CsvRow>(
+  const rows: CsvRow[] = [];
+  let parseError: string | null = null;
+  Papa.parse<CsvRow>(
     content.replace(/^\uFEFF/, ""),
     {
       header: true,
       skipEmptyLines: "greedy",
       transformHeader: header => header.trim(),
       transform: value => value.trim(),
+      step(result) {
+        if (result.errors.length && !parseError) {
+          parseError = result.errors[0].message;
+        }
+        const row = result.data;
+        if (!Object.values(row).some(Boolean)) return;
+        if (selectedCountries.length &&
+            !countryMatches(row, selectedCountries, name)) return;
+        const compact = Object.fromEntries(
+          Object.entries(row).filter(([key]) => RETAINED_COLUMNS.has(key))
+        );
+        compact.__searchText = Object.values(compact).join(" ").toLowerCase();
+        rows.push(compact);
+      },
     }
   );
 
-  if (parsed.errors.length > 0) {
-    throw new Error(
-      `Unable to parse ${name}: ${parsed.errors[0].message}`
-    );
+  if (parseError) {
+    throw new Error(`Unable to parse ${name}: ${parseError}`);
   }
 
-  return {
-    name,
-    rows: parsed.data
-      .filter(row =>
-        Object.values(row).some(Boolean)
-      )
-      .map(row => {
-        const compact = Object.fromEntries(
-          Object.entries(row).filter(
-            ([key]) => RETAINED_COLUMNS.has(key)
-          )
-        );
-
-        compact.__searchText =
-          Object.values(row).join(" ").toLowerCase();
-
-        return compact;
-      }),
-  };
+  return { name, rows };
 }
 
-async function loadBundledCsvs() {
-  if (!cachedRows) {
-    cachedRows = fs
-      .readdir(DATASET_DIRECTORY)
-      .then(names =>
-        names
-          .filter(name =>
-            name.toLowerCase().endsWith(".csv")
-          )
-          .sort()
-      )
-      .then(async names =>
-        Promise.all(
-          names.map(async name =>
-            parseCsv(
-              name,
-              await fs.readFile(
-                path.join(DATASET_DIRECTORY, name),
-                "utf8"
-              )
-            )
-          )
-        )
-      );
-  }
+async function loadBundledCsvs(countries: string[], report: ProgressReporter) {
+  const selected = COUNTRY_CARDS.filter(card =>
+    countries.some(country => country.toLowerCase() === card.name.toLowerCase()));
+  const key = selected.map(card => card.datasetFile).sort().join("|");
+  if (cachedRows?.key === key) return cachedRows.promise;
 
-  return cachedRows;
+  const promise = (async () => {
+    const names = [
+      ...selected.map(card => card.datasetFile),
+      "Estimated_Round_Trip_Travel_Costs_20_Countries_ALL_CITY_ROUTES.csv",
+      "ticketmaster_events_20_countries_unified.csv",
+      "UNESCO_World_Heritage_20_Countries_ENHANCED.csv",
+    ];
+    const datasets: { name: string; rows: CsvRow[] }[] = [];
+    for (const [index, name] of names.entries()) {
+      report(2 + Math.round(index / names.length * 18), `Reading ${name}`,
+        { completed: index, total: names.length });
+      const content = await fs.readFile(path.join(DATASET_DIRECTORY, name), "utf8");
+      const sharedDataset = !selected.some(card => card.datasetFile === name);
+      datasets.push(parseCsv(name, content, sharedDataset ? countries : []));
+    }
+    return datasets;
+  })();
+  cachedRows = { key, promise };
+  try {
+    return await promise;
+  } catch (error) {
+    if (cachedRows?.promise === promise) cachedRows = undefined;
+    throw error;
+  }
 }
 
 function numberValue(
@@ -189,6 +210,7 @@ function numberValue(
   keys: string[]
 ): number | null {
   for (const key of keys) {
+    if (!row[key]?.trim()) continue;
     const value = Number(row[key]);
 
     if (Number.isFinite(value)) {
@@ -528,117 +550,20 @@ async function hydrateSourceRows(
   }));
 }
 
-function anchorKey(point: Point) {
-  return `${Math.floor(point.latitude)}:${Math.floor(
-    point.longitude
-  )}`;
-}
-
-function nearestAnchor(
-  point: Point,
-  anchors: {
-    name: string;
-    point: Point;
-  }[],
-  index: Map<
-    string,
-    {
-      name: string;
-      point: Point;
-    }[]
-  >
-) {
-  const latitude = Math.floor(point.latitude);
-  const longitude = Math.floor(point.longitude);
-  let best:
-    | {
-        name: string;
-        point: Point;
-        distance: number;
-      }
-    | undefined;
-
-  for (let radius = 0; radius <= 3; radius += 1) {
-    for (
-      let lat = latitude - radius;
-      lat <= latitude + radius;
-      lat += 1
-    ) {
-      for (
-        let lon = longitude - radius;
-        lon <= longitude + radius;
-        lon += 1
-      ) {
-        for (const candidate of index.get(
-          `${lat}:${lon}`
-        ) ?? []) {
-          const distance = distanceKm(
-            candidate.point,
-            point
-          );
-
-          if (!best || distance < best.distance) {
-            best = { ...candidate, distance };
-          }
-        }
-      }
-    }
-
-    if (
-      best &&
-      best.distance < (radius + 1) * 111
-    ) {
-      return best;
-    }
-  }
-
-  if (best) {
-    return best;
-  }
-
-  return anchors.reduce(
-    (closest, candidate) => {
-      const distance = distanceKm(
-        candidate.point,
-        point
-      );
-
-      return !closest || distance < closest.distance
-        ? { ...candidate, distance }
-        : closest;
-    },
-    undefined as
-      | {
-          name: string;
-          point: Point;
-          distance: number;
-        }
-      | undefined
-  );
-}
-
 function isAccommodationRow(
   row: CsvRow,
   choices: string[]
 ) {
   return Boolean(
     row.fsq_category_labels &&
+      /hotel|apartment|condo|bed and breakfast|hostel|lodging|resort|motel|\binn\b/i.test(row.fsq_category_labels) &&
       accommodationMatch(row, choices)
   );
 }
 
-function rowPrice(row: CsvRow, fallback: number) {
-  const values = [
-    numberValue(row, ["price_midpoint"]),
-    numberValue(row, ["price_recommendation"]),
-    numberValue(row, ["price_min"]),
-    numberValue(row, ["price_max"]),
-  ].filter(
-    (value): value is number =>
-      value !== null && value >= 0
-  );
-
-  return values[0] ?? fallback;
+function isRestaurantRow(row: CsvRow) {
+  return Boolean(row.fsq_place_id &&
+    /restaurant|café|cafe|bistro|diner|food court/i.test(row.fsq_category_labels ?? ""));
 }
 
 function nightsFor(plan: TravelPlan) {
@@ -672,94 +597,6 @@ function travelersFor(plan: TravelPlan) {
   );
 }
 
-function routeFor(
-  rows: { source: string; row: CsvRow }[],
-  accommodation: CsvRow,
-  countries: string[]
-) {
-  const city = textValue(accommodation, [
-    "city_town",
-    "locality",
-    "venue_city",
-  ]).toLowerCase();
-  const country = textValue(accommodation, [
-    "country",
-    "destination_country",
-    "venue_country",
-  ]).toLowerCase();
-
-  const routes = rows
-    .filter(({ source }) =>
-      source.includes("Estimated_Round_Trip")
-    )
-    .filter(({ row }) => {
-      const destinationCity = textValue(row, [
-        "destination_city",
-      ]).toLowerCase();
-      const destinationCountry = textValue(row, [
-        "destination_country",
-      ]).toLowerCase();
-
-      return (
-        destinationCountry === country ||
-        countries.some(
-          selected =>
-            destinationCountry ===
-            selected.toLowerCase()
-        )
-      ) && (
-        !city ||
-        destinationCity === city
-      );
-    });
-  const usableRoutes = routes.length
-    ? routes
-    : rows.filter(({ source }) =>
-        source.includes("Estimated_Round_Trip")
-      );
-  const cityRoutes = usableRoutes.filter(({ row }) =>
-    textValue(row, ["destination_city"]).toLowerCase() ===
-    city
-  );
-  const countryRoutes = usableRoutes.filter(({ row }) =>
-    textValue(row, ["destination_country"]).toLowerCase() ===
-      country ||
-    countries.some(
-      selected =>
-        textValue(row, [
-          "destination_country",
-        ]).toLowerCase() === selected.toLowerCase()
-    )
-  );
-
-  return (cityRoutes.length > 0
-    ? cityRoutes
-    : countryRoutes.length > 0
-    ? countryRoutes
-    : usableRoutes
-  )
-    .sort((first, second) => {
-      const firstIsUs =
-        first.row.origin_country ===
-        "United States";
-      const secondIsUs =
-        second.row.origin_country ===
-        "United States";
-
-      return (
-        Number(secondIsUs) - Number(firstIsUs) ||
-        Number(
-          first.row
-            .recommended_standard_total_round_trip_transport_usd
-        ) -
-        Number(
-          second.row
-            .recommended_standard_total_round_trip_transport_usd
-        )
-      );
-    })[0] ?? null;
-}
-
 function itineraryItem(
   source: string,
   row: CsvRow,
@@ -778,408 +615,386 @@ function itineraryItem(
   );
 }
 
-async function buildRecommendations(
+const DALLAS = { latitude: 32.7767, longitude: -96.7970 };
+const NEARBY_KM = 40;
+const EXTENDED_KM = 100;
+
+function tripDates(plan: TravelPlan): string[] {
+  const count = nightsFor(plan);
+  const start = plan.checkIn ? new Date(`${plan.checkIn}T12:00:00Z`) : new Date();
+  if (Number.isNaN(start.getTime())) return [new Date().toISOString().slice(0, 10)];
+  return Array.from({ length: count }, (_, index) =>
+    new Date(start.getTime() + index * 86_400_000).toISOString().slice(0, 10)
+  );
+}
+
+function availableOn(row: CsvRow, source: string, date: string): boolean {
+  if (!source.includes("ticketmaster")) return true;
+  const start = row.start_date_local?.slice(0, 10);
+  const end = row.end_date_local?.slice(0, 10) || start;
+  return Boolean(start && start <= date && date <= end &&
+    !/cancelled|postponed/i.test(row.event_status ?? ""));
+}
+
+type ActivityCandidate = { source: string; row: CsvRow; distance: number };
+
+function clockMinutes(value: string | undefined): number | null {
+  const match = /^(\d{1,2}):(\d{2})/.exec(value ?? "");
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours < 24 && minutes < 60 ? hours * 60 + minutes : null;
+}
+
+function clockLabel(minutes: number): string {
+  const time = `${String(Math.floor(minutes / 60) % 24).padStart(2, "0")}:${String(Math.floor(minutes % 60)).padStart(2, "0")}`;
+  return minutes >= 24 * 60 ? `${time} (+1 day)` : time;
+}
+
+function scheduleDay(items: ActivityCandidate[], stay: Point) {
+  let best: {
+    items: ActivityCandidate[];
+    travelKm: number;
+    schedule: { activityId: string; startTime: string; endTime: string; timing: "source" | "estimated" }[];
+  } | null = null;
+  const visit = (order: ActivityCandidate[], remaining: ActivityCandidate[]) => {
+    if (remaining.length) {
+      for (const item of remaining) {
+        visit([...order, item], remaining.filter(candidate => candidate !== item));
+      }
+      return;
+    }
+    let current = stay;
+    let minute = 0;
+    let travelKm = 0;
+    const schedule: NonNullable<typeof best>["schedule"] = [];
+    for (const item of order) {
+      const destination = coordinates(item.row)!;
+      const distance = distanceKm(current, destination);
+      const arrival = minute + Math.ceil(distance / 30 * 60);
+      const eventStart = item.source.includes("ticketmaster")
+        ? clockMinutes(item.row.start_time_local) : null;
+      const eventEnd = item.source.includes("ticketmaster")
+        ? clockMinutes(item.row.end_time_local) : null;
+      const start = eventStart ?? Math.max(arrival, 9 * 60);
+      const end = eventStart !== null && eventEnd !== null
+        ? eventEnd > start ? eventEnd : eventEnd + 24 * 60
+        : start + (item.source.includes("ticketmaster") ? 120 : 90);
+      if (arrival > start || end > 26 * 60 ||
+        (eventStart === null && end > 22 * 60)) return;
+      schedule.push({
+        activityId: rowIdentity(item.row) || rowName(item.row, item.source),
+        startTime: clockLabel(start), endTime: clockLabel(end),
+        timing: eventStart !== null ? "source" : "estimated",
+      });
+      travelKm += distance;
+      current = destination;
+      minute = end;
+    }
+    travelKm += distanceKm(current, stay);
+    if (minute + Math.ceil(distanceKm(current, stay) / 30 * 60) > 26 * 60) return;
+    if (!best || travelKm < best.travelKm) best = { items: order, travelKm, schedule };
+  };
+  visit([], items);
+  return best as { items: ActivityCandidate[]; travelKm: number; schedule: {
+    activityId: string; startTime: string; endTime: string; timing: "source" | "estimated"
+  }[] } | null;
+}
+
+function activityPrice(row: CsvRow): number | null {
+  const currency = row.price_currency || row.entry_fee_currency;
+  if (currency !== "USD") return null;
+  const midpoint = numberValue(row, ["price_midpoint"]);
+  const minimum = numberValue(row, ["price_min", "entry_fee_min"]);
+  const maximum = numberValue(row, ["price_max", "entry_fee_max"]);
+  const value = midpoint ?? (minimum !== null && maximum !== null
+    ? (minimum + maximum) / 2 : minimum ?? numberValue(row, ["entry_fee"]));
+  return value !== null && value >= 0 ? value : null;
+}
+
+function stayPrice(row: CsvRow, choices: string[], cityPrice?: CsvRow): number {
+  const keys = choices.some(choice => /apartment|condo/i.test(choice))
+    ? ["apartment_nightly_usd", "airbnb_nightly_usd", "hotel_nightly_usd"]
+    : ["hotel_nightly_usd", "apartment_nightly_usd", "airbnb_nightly_usd"];
+  return numberValue(row, keys) ?? numberValue(cityPrice ?? {}, keys) ?? 150;
+}
+
+function bestRoute(
+  routes: { source: string; row: CsvRow }[],
+  stay: CsvRow,
+  point: Point
+) {
+  const country = textValue(stay, ["country", "destination_country"]).toLowerCase();
+  const sameCountry = routes.filter(({ row }) =>
+    row.destination_country?.toLowerCase() === country ||
+    row.destination_country_code?.toLowerCase() === country
+  );
+  return sameCountry.sort((a, b) => {
+    const origin = (row: CsvRow) =>
+      row.origin_city?.toLowerCase() === "dallas" ? 0 :
+      row.origin_country === "United States" ? 1 : 2;
+    const destinationDistance = (row: CsvRow) => {
+      const latitude = Number(row.destination_latitude);
+      const longitude = Number(row.destination_longitude);
+      return Number.isFinite(latitude) && Number.isFinite(longitude)
+        ? distanceKm(point, { latitude, longitude }) : 10_000;
+    };
+    const originDistance = (row: CsvRow) => {
+      const latitude = Number(row.origin_latitude);
+      const longitude = Number(row.origin_longitude);
+      return Number.isFinite(latitude) && Number.isFinite(longitude)
+        ? distanceKm(DALLAS, { latitude, longitude }) : 10_000;
+    };
+    return origin(a.row) - origin(b.row) ||
+      destinationDistance(a.row) - destinationDistance(b.row) ||
+      originDistance(a.row) - originDistance(b.row);
+  })[0] ?? null;
+}
+
+async function buildDailyRecommendations(
   datasets: { name: string; rows: CsvRow[] }[],
   plan: TravelPlan,
-  report: ProgressReporter = () => {},
-  uploads: UploadedCsv[] = []
+  report: ProgressReporter,
+  uploads: UploadedCsv[]
 ): Promise<RecommendationResponse> {
   const countries = plan.countries ?? [];
-  const filters = plan.recommendationFilters ?? {};
   const choices = plan.accommodationChoices ?? [];
-  const selectedFilters = Object.values(filters)
-    .flat()
-    .filter(Boolean);
-  const budget = Math.max(0, plan.budget ?? 0);
-  const nights = nightsFor(plan);
+  const filters = plan.recommendationFilters ?? {};
+  const selected = Object.entries(filters).flatMap(([category, options]) =>
+    options.map(option => ({ category, option }))
+  );
+  const dates = tripDates(plan);
   const travelers = travelersFor(plan);
-  const allRows = datasets.flatMap(dataset =>
-    dataset.rows.map(row => ({
-      source: dataset.name,
-      row,
-    }))
+  const budget = Math.max(0, plan.budget ?? 0);
+  const rows = datasets.flatMap(dataset => dataset.rows.map(row => ({ source: dataset.name, row })));
+  const routes = rows.filter(item => item.source.includes("Estimated_Round_Trip"));
+  const cityPrices = await loadCityPrices();
+  const places = rows.filter(item =>
+    !item.source.includes("Estimated_Round_Trip") &&
+    countryMatches(item.row, countries, item.source) && coordinates(item.row)
   );
-  report(10, "Loaded all CSV records");
-  const accommodations = allRows
-    .filter(({ source, row }) =>
-      countryMatches(row, countries, source)
-    )
-    .filter(({ row }) =>
-      isAccommodationRow(row, choices)
-    )
-    .map(({ source, row }) => {
-      const point = coordinates(row);
-
-      return point
-        ? {
-            source,
-            row,
-            point,
-            name: rowName(row, source),
-          }
-        : null;
-    })
-    .filter(
-      (
-        anchor
-      ): anchor is {
-        source: string;
-        row: CsvRow;
-        point: Point;
-        name: string;
-      } => anchor !== null
-    );
-  const accommodationRows = accommodations.length
-    ? accommodations
-    : allRows.filter(({ source, row }) =>
-        countryMatches(row, countries, source)
-      );
-  const balancedAccommodations = (() => {
-    const perCountry = new Map<string, number>();
-    const selected = [];
-
-    for (const accommodation of accommodationRows) {
-      const country = textValue(accommodation.row, [
-        "country",
-        "destination_country",
-      ]) || accommodation.source;
-      const count = perCountry.get(country) ?? 0;
-
-      if (count >= 5) {
-        continue;
-      }
-
-      perCountry.set(country, count + 1);
-      selected.push(accommodation);
-
-      if (selected.length >= 60) {
-        break;
-      }
-    }
-
-    return selected;
-  })();
-  const candidates = allRows
-    .filter(
-      ({ source, row }) =>
-        countryMatches(row, countries, source) &&
-        coordinates(row) &&
-        !(
-          choices.length > 0 &&
-          isAccommodationRow(row, choices)
-        )
-    )
-    .map(candidate => ({
-      ...candidate,
-      matches: filterMatches(candidate.row, filters),
-    }))
-    .filter(
-      candidate =>
-        selectedFilters.length === 0 ||
-        candidate.matches.matchedFilters.length > 0
-    );
-  report(
-    25,
-    `Found ${balancedAccommodations.length} accommodation and ${candidates.length} matching activity candidates`
+  const stays = places.filter(item => isAccommodationRow(item.row, choices));
+  const foodPlaces = places.filter(item => isRestaurantRow(item.row));
+  const activities = places.filter(item =>
+    !isAccommodationRow(item.row, []) &&
+    !isRestaurantRow(item.row) &&
+    (item.source.includes("ticketmaster") || item.source.includes("UNESCO") || Boolean(item.row.fsq_place_id))
   );
-  const itineraries: RecommendationItinerary[] = [];
-  const accommodationLimit = Math.min(
-    60,
-    balancedAccommodations.length
-  );
-  for (
-    let index = 0;
-    index < accommodationLimit;
-    index += 1
-  ) {
-    const accommodation = balancedAccommodations[index];
-    const accommodationPoint = coordinates(
-      accommodation.row
-    );
+  report(25, `Found ${stays.length} stays and ${activities.length} activities`);
 
-    if (!accommodationPoint) {
-      continue;
-    }
-
-    const anchor = {
-      name: rowName(
-        accommodation.row,
-        accommodation.source
-      ),
-      point: accommodationPoint,
-    };
-    const scoredCandidates = candidates
-      .map(candidate => {
-        const point = coordinates(candidate.row);
-        return point
-          ? {
-              candidate,
-              point,
-              matches: candidate.matches,
-              distance: distanceKm(
-                accommodationPoint,
-                point
-              ),
-            }
-          : null;
-      })
-      .filter(
-        (item): item is ScoredCandidate => item !== null
-      );
-    const childRecommendations: Record<
-      string,
-      RecommendationItem[]
-    > = {};
-    for (const [category, options] of Object.entries(filters)) {
-      for (const option of options) {
-        const key = `${category}: ${option}`;
-        childRecommendations[key] = scoredCandidates
-          .filter(item =>
-            Object.values(item.candidate.row)
-              .join(" ")
-              .toLowerCase()
-              .includes(option.toLowerCase()) ||
-            item.candidate.matches.matchedFilters.some(
-              match =>
-                match.toLowerCase() === option.toLowerCase()
-            )
-          )
-          .sort((first, second) =>
-            first.distance - second.distance
-          )
-          .slice(0, 15)
-          .map(item =>
-            itineraryItem(
-              item.candidate.source,
-              item.candidate.row,
-              anchor,
-              {
-                matchedFilters: [option],
-                matchedFilterCategories: [category],
-              }
-            )
-          )
-          .filter(
-            (item): item is RecommendationItem =>
-              item !== null
-          );
-      }
-    }
-    if (
-      selectedFilters.length > 0 &&
-      Object.values(childRecommendations).some(
-        group => group.length === 0
-      )
-    ) {
-      continue;
-    }
-    const nearby = scoredCandidates
-      .sort(
-        (first, second) =>
-          first.distance - second.distance
-      )
-      .slice(0, 2);
-    const activities = nearby
-      .map(item =>
-        itineraryItem(
-          item.candidate.source,
-          item.candidate.row,
-          anchor,
-          item.matches
-        )
-      )
-      .filter(
-        (item): item is RecommendationItem =>
-          item !== null
-      );
-
-    if (activities.length < 2) {
-      continue;
-    }
-
-    const accommodationCost =
-      rowPrice(accommodation.row, 150) *
-      nights *
-      travelers;
-    const activityCost =
-      activities.reduce(
-        (total, activity) =>
-          total +
-          rowPrice(
-            allRows.find(
-              ({ row }) =>
-                row.fsq_place_id === activity.id ||
-                row.event_id === activity.id
-            )?.row ?? {},
-            50
-          ),
-        0
-      ) *
-      travelers;
-    const route = routeFor(
-      allRows,
-      accommodation.row,
-      countries
-    );
-    const transportCost =
-      numberValue(
-        route?.row ?? {},
-        [
-          "recommended_standard_total_round_trip_transport_usd",
-          "budget_total_round_trip_transport_usd",
-        ]
-      ) ??
-      800;
-    const totalCost =
-      accommodationCost +
-      activityCost +
-      transportCost * travelers;
-    const fit =
-      budget > 0
-        ? Math.max(
-            0,
-            Math.min(
-              100,
-              (1 - Math.abs(budget - totalCost) / budget) *
-                100
-            )
-          )
-        : 0;
-    const accommodationItem = itineraryItem(
-      accommodation.source,
-      accommodation.row,
-      anchor,
-      { matchedFilters: [], matchedFilterCategories: [] }
-    );
-
-    if (!accommodationItem) {
-      continue;
-    }
-
-    itineraries.push({
-      rank: 0,
-      budgetFitPercentage: Number(fit.toFixed(2)),
-      totalCost: Number(totalCost.toFixed(2)),
-      budget,
-      remainingBudget: Number(
-        (budget - totalCost).toFixed(2)
-      ),
-      nights,
-      travelers,
-      accommodationCost: Number(
-        accommodationCost.toFixed(2)
-      ),
-      activityCost: Number(activityCost.toFixed(2)),
-      transportCost: Number(
-        (transportCost * travelers).toFixed(2)
-      ),
-      distanceKm: Number(
-        nearby[0]!.distance.toFixed(2)
-      ),
-      accommodation: accommodationItem,
-      activities,
-      childRecommendations,
-      transport: route
-        ? itineraryItem(
-            route.source,
-            route.row,
-            anchor,
-            { matchedFilters: [], matchedFilterCategories: [] }
-          )
-        : null,
-    });
-
-    if (
-      index % Math.max(1, Math.floor(accommodationLimit / 20)) ===
-      0
-    ) {
-      report(
-        30 +
-          Math.round(
-            (index / Math.max(1, accommodationLimit)) * 60
-          ),
-        "Calculating complete trip costs",
-        {
-          completed: index + 1,
-          total: accommodationLimit,
-        }
-      );
+  // Spread the search across cities so a large city cannot take every result slot.
+  const anchors: typeof stays = [];
+  const cityCounts = new Map<string, number>();
+  const byCountry = new Map<string, typeof stays>();
+  for (const stay of stays) {
+    const city = textValue(stay.row, ["locality", "city_town", "venue_city"]).toLowerCase();
+    const country = stay.row.country || stay.source;
+    const key = `${country}:${city}`;
+    if ((cityCounts.get(key) ?? 0) >= 2) continue;
+    const group = byCountry.get(country) ?? [];
+    if (group.length >= 20) continue;
+    cityCounts.set(key, (cityCounts.get(key) ?? 0) + 1);
+    group.push(stay);
+    byCountry.set(country, group);
+  }
+  for (let round = 0; round < 20 && anchors.length < 80; round++) {
+    for (const group of byCountry.values()) {
+      if (group[round]) anchors.push(group[round]);
+      if (anchors.length >= 80) break;
     }
   }
 
-  report(95, "Sorting recommendations by budget fit");
-  const top10 = itineraries
-    .sort(
-      (first, second) =>
-        second.budgetFitPercentage -
-          first.budgetFitPercentage ||
-        first.distanceKm - second.distanceKm
-    )
-    .slice(0, 10)
-    .map((item, index) => ({
-      ...item,
-      rank: index + 1,
-    }));
+  const itineraries: RecommendationItinerary[] = [];
+  for (const [index, stay] of anchors.entries()) {
+    const point = coordinates(stay.row)!;
+    const reference = { name: rowName(stay.row, stay.source), point };
+    const stayCountry = stay.source.replace(/^[^_]+_/, "").replace(/\.csv$/, "").replaceAll("_", " ");
+    const route = bestRoute(routes, stay.row, point);
+    const nearby = activities.flatMap(item => {
+      if (!countryMatches(item.row, [stayCountry], item.source)) return [];
+      const activityPoint = coordinates(item.row)!;
+      if (Math.abs(activityPoint.latitude - point.latitude) > 1 ||
+        Math.abs(activityPoint.longitude - point.longitude) > 1.5) return [];
+      const distance = distanceKm(point, activityPoint);
+      return distance <= EXTENDED_KM ? [{ ...item, distance }] : [];
+    }).sort((a, b) => a.distance - b.distance);
+    const nearbyRestaurants = foodPlaces.flatMap(item => {
+      if (!countryMatches(item.row, [stayCountry], item.source)) return [];
+      const restaurantPoint = coordinates(item.row)!;
+      if (Math.abs(restaurantPoint.latitude - point.latitude) > 0.2 ||
+        Math.abs(restaurantPoint.longitude - point.longitude) > 0.3) return [];
+      const distance = distanceKm(point, restaurantPoint);
+      return distance <= 20 ? [{ ...item, distance }] : [];
+    }).sort((a, b) => a.distance - b.distance).slice(0, 12);
+    if (nearby.length < 2) continue;
 
-  const outputItems = [
-    ...top10.flatMap(item => [
-      item.accommodation,
-      ...item.activities,
-      ...Object.values(item.childRecommendations).flat(),
-      ...(item.transport ? [item.transport] : []),
-    ]),
-  ];
-  const hydrated = await hydrateSourceRows(
-    outputItems,
-    uploads
-  );
-  const hydratedById = new Map(
-    hydrated.map(item => [item.id, item])
-  );
-  const hydratedItineraries = top10.map(item => ({
-    ...item,
-    accommodation:
-      hydratedById.get(item.accommodation.id) ??
-      item.accommodation,
-    activities: item.activities.map(
-      activity =>
-        hydratedById.get(activity.id) ?? activity
-    ),
-    childRecommendations: Object.fromEntries(
-      Object.entries(item.childRecommendations).map(
-        ([key, children]) => [
-          key,
-          children.map(
-            child =>
-              hydratedById.get(child.id) ?? child
-          ),
-        ]
-      )
-    ),
-    transport: item.transport
-      ? hydratedById.get(item.transport.id) ??
-        item.transport
-      : null,
+    const days: RecommendationItinerary["days"] = [];
+    const usedEvents = new Set<string>();
+    const usedPlaces = new Set<string>();
+    const matchedInterests = new Set<string>();
+    let unpricedActivityCount = 0;
+    for (const [dayIndex, date] of dates.entries()) {
+      const valid = nearby.filter(item => availableOn(item.row, item.source, date));
+      const chosen: typeof valid = [];
+      const pick = (pool: typeof valid, limit = 5) => {
+        for (const item of pool) {
+          if (chosen.length >= limit) break;
+          const id = `${item.source}:${rowIdentity(item.row) || rowName(item.row, item.source)}`;
+          if (chosen.some(candidate => candidate === item) || usedEvents.has(id)) continue;
+          if (!scheduleDay([...chosen, item], point)) continue;
+          chosen.push(item);
+          if (item.source.includes("ticketmaster")) usedEvents.add(id);
+          else usedPlaces.add(id);
+        }
+      };
+      // Exact selected interests nearby, then broader nearby choices, then other places.
+      const rotated = [...selected.slice(dayIndex % Math.max(1, selected.length)),
+        ...selected.slice(0, dayIndex % Math.max(1, selected.length))];
+      for (const { option } of rotated) {
+        if (chosen.length >= 5) break;
+        pick(valid.filter(item => item.distance <= NEARBY_KM &&
+          searchableText(item.row).includes(option.toLowerCase()) &&
+          !usedPlaces.has(`${item.source}:${rowIdentity(item.row) || rowName(item.row, item.source)}`)),
+          chosen.length + 1);
+      }
+      pick(valid.filter(item => item.distance <= NEARBY_KM &&
+        !usedPlaces.has(`${item.source}:${rowIdentity(item.row) || rowName(item.row, item.source)}`)));
+      if (chosen.length < 2) pick(valid.filter(item => item.distance <= EXTENDED_KM &&
+        !usedPlaces.has(`${item.source}:${rowIdentity(item.row) || rowName(item.row, item.source)}`)));
+      if (chosen.length < 2) pick(valid.filter(item => item.distance <= NEARBY_KM));
+      if (chosen.length < 2) pick(valid);
+      if (chosen.length < 2) break;
+
+      const scheduled = scheduleDay(chosen, point);
+      if (!scheduled) break;
+      const ordered = scheduled.items;
+      const dayActivities = ordered.map(item => {
+        const matches = filterMatches(item.row, filters);
+        for (const option of matches.matchedFilters) matchedInterests.add(option.toLowerCase());
+        return itineraryItem(item.source, item.row, reference, matches)!;
+      });
+      const restaurant = nearbyRestaurants.length
+        ? nearbyRestaurants[dayIndex % nearbyRestaurants.length] : null;
+      const foodVenue = restaurant
+        ? itineraryItem(restaurant.source, restaurant.row, reference,
+          { matchedFilters: [], matchedFilterCategories: [] }) : null;
+      const restaurantPrice = restaurant ? activityPrice(restaurant.row) : null;
+      const foodCost = Number((restaurantPrice ?? 45) * travelers);
+      const lastActivityPoint = coordinates(ordered.at(-1)!.row)!;
+      const restaurantPoint = restaurant ? coordinates(restaurant.row)! : null;
+      const travelKm = restaurantPoint
+        ? scheduled.travelKm - distanceKm(lastActivityPoint, point) +
+          distanceKm(lastActivityPoint, restaurantPoint) + distanceKm(restaurantPoint, point)
+        : scheduled.travelKm;
+      unpricedActivityCount += ordered.filter(item => activityPrice(item.row) === null).length;
+      const activityCosts = ordered.map(item => {
+        const unitPrice = activityPrice(item.row);
+        return unitPrice === null ? null : Number((unitPrice * travelers).toFixed(2));
+      });
+      days.push({
+        date,
+        activities: dayActivities,
+        activityCosts,
+        activityCost: Number(activityCosts.reduce((total, cost) => total + (cost ?? 0), 0).toFixed(2)),
+        foodVenue,
+        foodCost: Number(foodCost.toFixed(2)),
+        foodPriceEstimated: restaurantPrice === null,
+        localTransportCost: Number((travelKm * 0.5).toFixed(2)),
+        travelKm: Number(travelKm.toFixed(2)),
+        travelHours: Number((travelKm / 30).toFixed(2)),
+        schedule: scheduled.schedule,
+      });
+    }
+    if (days.length !== dates.length) continue;
+
+    const accommodation = itineraryItem(stay.source, stay.row, reference,
+      { matchedFilters: [], matchedFilterCategories: [] })!;
+    const cityName = textValue(stay.row, ["locality", "city_town"]).toLowerCase();
+    const cityPrice = cityPrices.find(row =>
+      row.city_town?.toLowerCase() === cityName &&
+      (row.country?.toLowerCase() === stay.row.country?.toLowerCase() ||
+        row.country?.toLowerCase() === stay.source.replace(/^[^_]+_/, "").replace(/\.csv$/, "").replaceAll("_", " ").toLowerCase())
+    );
+    const transport = route ? itineraryItem(route.source, route.row, reference,
+      { matchedFilters: [], matchedFilterCategories: [] }) : null;
+    const accommodationCost = stayPrice(stay.row, choices, cityPrice) * dates.length;
+    const activityCost = days.reduce((total, day) => total + day.activityCost, 0);
+    const localTransportCost = days.reduce((total, day) => total + day.localTransportCost, 0);
+    const foodCost = days.reduce((total, day) => total + day.foodCost, 0);
+    const perPersonRoute = route ? numberValue(route.row,
+      ["recommended_standard_total_round_trip_transport_usd", "budget_total_round_trip_transport_usd"]) : null;
+    const transportCost = (perPersonRoute ?? 800) * travelers;
+    const roundTripTravelHours = route ? numberValue(route.row,
+      ["estimated_nonstop_round_trip_airborne_hours"]) : null;
+    const localTravelHours = days.reduce((total, day) => total + day.travelHours, 0);
+    const totalCost = accommodationCost + activityCost + localTransportCost + foodCost + transportCost;
+    const fit = budget > 0 ? Math.max(0, 100 - Math.abs(totalCost - budget) / budget * 100) : 0;
+    const coverage = selected.length ? Math.min(1, matchedInterests.size / selected.length) : 1;
+    const scheduledActivities = days.flatMap(day => day.activities);
+    const priceCompleteness = 1 - unpricedActivityCount / scheduledActivities.length;
+    const averageDistance = scheduledActivities.reduce((sum, item) => sum + item.distanceKm, 0)
+      / scheduledActivities.length;
+    const proximity = Math.max(0, 1 - averageDistance / NEARBY_KM);
+    const score = Math.max(0, coverage * 55 + fit * 0.3 +
+      priceCompleteness * 10 + proximity * 5 -
+      (budget > 0 && totalCost > budget ? 15 : 0));
+    const costNotes = [
+      "Food uses a restaurant's USD price estimate when available; otherwise $45 per traveler per day. Restaurant opening hours are unverified.",
+      "Local transport is a route estimate at $0.50/km, not a booked carrier.",
+      "Local travel time assumes 30 km/h and excludes time spent at activities.",
+      `${unpricedActivityCount} activity visits have no USD price and are excluded from the quoted total; the actual trip may cost more.`,
+      "When only an activity price range is supplied, its midpoint is used as an estimate.",
+      "Activity durations are estimated where event times are absent. Place opening hours are not supplied by these datasets.",
+    ];
+    if (cityPrice) costNotes.push("Nightly lodging uses a simulated city estimate, not a quote for this specific stay.");
+    else costNotes.push("Stay has no matched nightly rate; $150 per night was estimated.");
+    if (perPersonRoute === null) costNotes.push("No matching route price; $800 per traveler was estimated.");
+    itineraries.push({
+      rank: 0, score: Number(score.toFixed(2)), budgetFitPercentage: Number(fit.toFixed(2)),
+      totalCost: Number(totalCost.toFixed(2)), budget,
+      remainingBudget: Number((budget - totalCost).toFixed(2)),
+      nights: dates.length, travelers, accommodationCost, activityCost,
+      unpricedActivityCount,
+      transportCost, foodCost, localTransportCost: Number(localTransportCost.toFixed(2)),
+      roundTripTravelHours,
+      totalTravelHours: roundTripTravelHours === null ? null :
+        Number((roundTripTravelHours + localTravelHours).toFixed(2)),
+      costNotes, distanceKm: days[0].activities[0].distanceKm,
+      accommodation, activities: days.flatMap(day => day.activities), days,
+      childRecommendations: Object.fromEntries(selected.map(({ category, option }) => [
+        `${category}: ${option}`,
+        days.flatMap(day => day.activities).filter(item =>
+          item.matchedFilters.some(match => match.toLowerCase() === option.toLowerCase()))
+      ])),
+      transport,
+    });
+    if (index % 5 === 0) report(30 + Math.round(index / anchors.length * 60),
+      "Building daily itineraries", { completed: index + 1, total: anchors.length });
+  }
+  const top10 = itineraries.sort((a, b) => b.score - a.score ||
+    b.budgetFitPercentage - a.budgetFitPercentage || a.distanceKm - b.distanceKm)
+    .slice(0, 10).map((item, index) => ({ ...item, rank: index + 1 }));
+  report(95, "Loading complete source rows");
+  const output = [...new Map(top10.flatMap(item => [item.accommodation, ...item.activities,
+    ...item.days.flatMap(day => day.foodVenue ? [day.foodVenue] : []),
+    ...(item.transport ? [item.transport] : [])]).map(item =>
+    [`${item.source}:${item.id}`, item] as const)).values()];
+  const hydrated = await hydrateSourceRows(output, uploads);
+  const byId = new Map(hydrated.map(item => [`${item.source}:${item.id}`, item]));
+  const full = (item: RecommendationItem) => byId.get(`${item.source}:${item.id}`) ?? item;
+  const complete = top10.map(item => ({
+    ...item, accommodation: full(item.accommodation),
+    days: item.days.map(day => ({ ...day, activities: day.activities.map(full),
+      foodVenue: day.foodVenue ? full(day.foodVenue) : null })),
+    transport: item.transport ? full(item.transport) : null,
   }));
-  const response: RecommendationResponse = {
-    generatedAt: new Date().toISOString(),
-    criteria: {
-      countries,
-      accommodationChoices: choices,
-      filters,
-    },
-    top10: hydratedItineraries,
-    firstRecommendation:
-      hydratedItineraries[0] ?? null,
-    dataSources: datasets.map(
-      dataset => dataset.name
-    ),
-    totalCandidates: itineraries.length,
-  };
-
   report(100, "Recommendations ready");
-
-  return response;
+  return {
+    generatedAt: new Date().toISOString(),
+    criteria: { countries, accommodationChoices: choices, filters },
+    top10: complete, firstRecommendation: complete[0] ?? null,
+    dataSources: datasets.map(dataset => dataset.name), totalCandidates: itineraries.length,
+  };
 }
 
 export async function createRecommendations(
@@ -1189,13 +1004,13 @@ export async function createRecommendations(
 ) {
   const notify = report ?? (() => {});
   notify(2, "Starting recommendation search");
-  const bundled = await loadBundledCsvs();
+  const bundled = await loadBundledCsvs(plan.countries ?? [], notify);
   notify(7, "Reading bundled CSV datasets");
   const uploaded = uploads.map(file =>
     parseCsv(file.name, file.content)
   );
 
-  return buildRecommendations(
+  return buildDailyRecommendations(
     [...bundled, ...uploaded],
     plan,
     notify,

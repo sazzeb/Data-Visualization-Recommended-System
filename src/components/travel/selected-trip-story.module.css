@@ -1,0 +1,73 @@
+.story { display: grid; gap: 22px; margin: 0 0 26px; color: #183028; }
+.hero { display: flex; justify-content: space-between; gap: 28px; align-items: flex-end; padding: clamp(24px, 4vw, 42px); border-radius: 24px; color: #fff; background: radial-gradient(circle at 90% 0%, #26a363 0, transparent 30%), linear-gradient(120deg, #073d2b, #086841); overflow: hidden; }
+.eyebrow { display: block; color: #148150; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.hero .eyebrow { color: #9af0bf; }
+.hero h2 { margin: 10px 0; font-size: clamp(27px, 4vw, 48px); letter-spacing: -.045em; line-height: 1.04; }
+.hero p { display: flex; gap: 7px; align-items: center; margin: 0 0 21px; color: #d5f5e4; }
+.heroChips, .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.heroChips span { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ffffff4a; border-radius: 999px; padding: 8px 11px; font-size: 12px; background: #ffffff18; }
+.heroPrice { display: grid; gap: 7px; min-width: 220px; padding: 20px; border-radius: 18px; background: #ffffff20; backdrop-filter: blur(10px); }
+.heroPrice small, .heroPrice span { color: #dbf7e7; }
+.heroPrice strong { font-size: clamp(25px, 3vw, 38px); line-height: 1; }
+.selectionStrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid #dfe9e3; border-radius: 17px; overflow: hidden; background: #dfe9e3; }
+.selectionStrip > div { padding: 18px 20px; background: #f8fbf9; }
+.selectionStrip strong { font-size: 11px; color: #15734b; text-transform: uppercase; letter-spacing: .08em; }
+.selectionStrip p { margin: 7px 0 0; font-size: 13px; line-height: 1.5; }
+.stayCard { display: flex; justify-content: space-between; gap: 18px; padding: 24px; border: 1px solid #dce8e2; border-radius: 20px; background: #fff; box-shadow: 0 10px 30px #163c2110; }
+.stayCard h3 { margin: 8px 0 3px; font-size: 25px; }
+.stayCard p { margin: 0 0 14px; color: #64766d; }
+.chips span { padding: 6px 9px; border-radius: 999px; background: #eaf6ee; color: #216c45; font-size: 11px; font-weight: 700; }
+.stayPrice { display: grid; align-content: center; gap: 5px; min-width: 175px; border-left: 1px solid #e5eee8; padding-left: 24px; }
+.stayPrice small, .stayPrice span { color: #708178; font-size: 12px; }
+.stayPrice strong { color: #086d3c; font-size: 26px; }
+.daysHeading, .flowHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.daysHeading h3, .flowHeading h3 { margin: 5px 0 0; font-size: clamp(22px, 2.5vw, 30px); letter-spacing: -.03em; }
+.daysHeading > span { color: #6f8176; font-size: 12px; }
+.days { display: grid; gap: 10px; }
+.day { border: 1px solid #dde9e1; border-radius: 16px; background: #fff; overflow: hidden; }
+.day[open] { box-shadow: 0 9px 24px #163c2110; }
+.day > summary { display: flex; align-items: center; gap: 15px; padding: 16px 18px; cursor: pointer; list-style: none; }
+.day > summary::-webkit-details-marker { display: none; }
+.day > summary > span:nth-child(2) { display: grid; gap: 3px; }
+.day > summary small { color: #718278; }
+.day > summary b { margin-left: auto; white-space: nowrap; color: #087140; }
+.dayNumber { display: grid; place-items: center; width: 39px; height: 39px; border-radius: 11px; background: #e4f4e9; color: #087140; font-weight: 800; }
+.dayContent { display: grid; gap: 9px; padding: 4px 18px 18px 72px; }
+.place { display: flex; gap: 13px; border: 1px solid #e8eee9; border-radius: 13px; padding: 14px; }
+.placeIcon { display: grid; place-items: center; align-self: flex-start; width: 29px; height: 29px; flex: 0 0 auto; border-radius: 50%; background: #f0f6ec; color: #087140; }
+.placeBody { flex: 1; min-width: 0; }
+.placeTop { display: flex; justify-content: space-between; gap: 15px; }
+.placeTop h4 { margin: 2px 0 0; font-size: 15px; }
+.placeTop > strong { color: #087140; white-space: nowrap; }
+.kind { color: #8663a2; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.placeBody p { margin: 7px 0 10px; color: #6d7d73; font-size: 12px; }
+.sourceDetails { margin-top: 11px; color: #4f6858; font-size: 12px; }
+.sourceDetails summary { width: fit-content; cursor: pointer; font-weight: 700; color: #087140; }
+.sourceDetails dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin: 12px 0 0; }
+.sourceDetails dl > div { border-top: 1px solid #e9efe9; padding-top: 7px; overflow-wrap: anywhere; }
+.sourceDetails dt { color: #77877c; text-transform: capitalize; }
+.sourceDetails dd { margin: 3px 0 0; color: #233c2e; }
+.foodNote { margin: 0; color: #64766d; font-size: 12px; }
+.dayTotals { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 9px; border-top: 1px solid #e8eee9; }
+.dayTotals span { padding: 6px 9px; border-radius: 8px; background: #f5f8f5; font-size: 11px; font-weight: 700; }
+.flowGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.flowCard { min-width: 0; padding: 23px; border-radius: 20px; background: #112e23; color: #fff; }
+.flowCard:nth-child(2) { background: #153b35; }
+.flowTitle { display: flex; align-items: center; gap: 11px; }
+.flowTitle > svg { color: #91e9ac; }
+.flowTitle span { font-size: 10px; letter-spacing: .12em; color: #97e3b2; }
+.flowTitle h4 { margin: 2px 0 0; font-size: 19px; }
+.flowTitle > strong { margin-left: auto; white-space: nowrap; }
+.routeLine { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 25px 0; font-size: 13px; font-weight: 700; }
+.routeLine svg { color: #91e9ac; flex: 0 0 auto; }
+.flowCard p { color: #bdd4c5; font-size: 12px; line-height: 1.6; }
+.flowCard .sourceDetails summary { color: #9af0bf; }
+.flowCard .sourceDetails dt { color: #a9c9b5; }
+.flowCard .sourceDetails dd { color: #fff; }
+.localFlows { max-height: 300px; overflow: auto; display: grid; gap: 8px; margin-top: 17px; }
+.localFlows > div { display: grid; gap: 5px; padding: 11px; border: 1px solid #ffffff2b; border-radius: 10px; }
+.localFlows b { color: #a3efbb; font-size: 11px; }
+.localFlows span { line-height: 1.5; font-size: 12px; overflow-wrap: anywhere; }
+.localFlows small { display: flex; align-items: center; gap: 5px; color: #c0d5c9; }
+@media (max-width: 850px) { .hero, .stayCard { flex-direction: column; align-items: stretch; } .heroPrice { min-width: 0; } .selectionStrip, .flowGrid { grid-template-columns: 1fr; } .stayPrice { border-left: 0; border-top: 1px solid #e5eee8; padding: 16px 0 0; } }
+@media (max-width: 600px) { .dayContent { padding-left: 14px; } .placeTop { flex-direction: column; gap: 5px; } .sourceDetails dl { grid-template-columns: 1fr; } .daysHeading { align-items: flex-start; flex-direction: column; } }
