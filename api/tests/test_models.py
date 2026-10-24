@@ -1,4 +1,4 @@
-from python_recommendations.models import TravelPlan
+from api.models import TravelPlan
 
 
 def test_plan_accepts_frontend_camel_case_contract() -> None:

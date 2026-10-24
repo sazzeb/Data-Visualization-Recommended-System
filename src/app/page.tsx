@@ -11,9 +11,6 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { AppWorkspace } from "@/components/layout/AppWorkspace";
 import { StepFooter } from "@/components/layout/StepFooter";
 
-import { DestinationOverview } from
-  "@/components/charts/destination-overview";
-
 import { AccommodationDetail } from
   "@/components/travel/accommodation-detail";
 

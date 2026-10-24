@@ -26,7 +26,7 @@ destination.
 From the repository root:
 
 ```bash
-python3 -m python_recommendations.cli \
+python3 -m api.cli \
   --data-dir public/datasets/csv_file \
   --plan plan.json \
   --output recommendations.json
@@ -35,7 +35,7 @@ python3 -m python_recommendations.cli \
 Build only the SQLite index:
 
 ```bash
-python3 -m python_recommendations.cli \
+python3 -m api.cli \
   --data-dir public/datasets/csv_file \
   --database .travelwise/recommendations.sqlite \
   --build-index-only

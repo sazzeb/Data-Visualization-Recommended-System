@@ -12,7 +12,6 @@ export const PLANNER_STEPS = [
 export const PRIMARY_NAVIGATION = [
   { label: "Home", step: 1 },
   { label: "Explore", step: 7 },
-  { label: "Trips", step: 8 },
 ] as const;
 
 export const PLANNER_STEP_COUNT = PLANNER_STEPS.length;

@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { gunzip } from "node:zlib";
+import { promisify } from "node:util";
 
 import Papa from "papaparse";
 
@@ -38,6 +40,26 @@ const DATASET_DIRECTORY = path.join(
   "datasets",
   "csv_file"
 );
+
+const gunzipAsync = promisify(gunzip);
+
+async function readDataset(name: string): Promise<string> {
+  const baseUrl = process.env.TRAVEL_DATA_BASE_URL?.trim();
+  if (!baseUrl) {
+    if (process.env.VERCEL) {
+      throw new Error("TRAVEL_DATA_BASE_URL is required for deployed recommendations.");
+    }
+    return fs.readFile(path.join(DATASET_DIRECTORY, name), "utf8");
+  }
+
+  const url = `${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(name)}.gz`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${name} from dataset storage (${response.status}).`);
+  }
+  const compressed = Buffer.from(await response.arrayBuffer());
+  return (await gunzipAsync(compressed)).toString("utf8");
+}
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -190,7 +212,7 @@ async function loadBundledCsvs(countries: string[], report: ProgressReporter) {
     for (const [index, name] of names.entries()) {
       report(2 + Math.round(index / names.length * 18), `Reading ${name}`,
         { completed: index, total: names.length });
-      const content = await fs.readFile(path.join(DATASET_DIRECTORY, name), "utf8");
+      const content = await readDataset(name);
       const sharedDataset = !selected.some(card => card.datasetFile === name);
       datasets.push(parseCsv(name, content, sharedDataset ? countries : []));
     }
@@ -517,10 +539,7 @@ async function hydrateSourceRows(
     );
     const content = upload
       ? upload.content
-      : await fs.readFile(
-          path.join(DATASET_DIRECTORY, source),
-          "utf8"
-        );
+      : await readDataset(source);
     const parsed = Papa.parse<CsvRow>(
       content.replace(/^\uFEFF/, ""),
       {
@@ -895,7 +914,10 @@ async function buildDailyRecommendations(
         date,
         activities: dayActivities,
         activityCosts,
-        activityCost: Number(activityCosts.reduce((total, cost) => total + (cost ?? 0), 0).toFixed(2)),
+        activityCost: Number(activityCosts.reduce<number>(
+          (total, cost) => total + (cost ?? 0),
+          0
+        ).toFixed(2)),
         foodVenue,
         foodCost: Number(foodCost.toFixed(2)),
         foodPriceEstimated: restaurantPrice === null,

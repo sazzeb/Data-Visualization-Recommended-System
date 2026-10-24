@@ -1,9 +1,9 @@
 import csv
 from pathlib import Path
 
-from python_recommendations.engine import RecommendationEngine
-from python_recommendations.models import TravelPlan
-from python_recommendations.store import TravelDataStore
+from api.engine import RecommendationEngine
+from api.models import TravelPlan
+from api.store import TravelDataStore
 
 
 def write_csv(path: Path, name: str, rows: list[dict[str, str]]) -> None:

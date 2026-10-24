@@ -1,4 +1,4 @@
-from python_recommendations.geo import haversine_km, valid_point
+from api.geo import haversine_km, valid_point
 
 
 def test_haversine_zero_distance() -> None:
