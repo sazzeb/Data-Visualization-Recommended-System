@@ -246,6 +246,131 @@
   margin: 12px 0 0;
 }
 
+.plotPicker {
+  display: flex;
+  margin: 17px 0 18px;
+}
+
+.plotPicker label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #526174;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.plotPicker select {
+  min-width: 190px;
+  min-height: 38px;
+  padding: 8px 34px 8px 11px;
+  border: 1px solid #cbdbe7;
+  border-radius: 9px;
+  background: #f7fafc;
+  color: #17384e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plotBody {
+  min-width: 0;
+  border-top: 1px solid #e8edf1;
+  padding-top: 12px;
+}
+
+.plotCaption {
+  margin: 10px 0 3px;
+  font-size: 11px;
+  color: #66788b;
+}
+
+.lollipopDay {
+  padding: 15px 1px;
+  border-bottom: 1px solid #e8edf1;
+}
+
+.lollipopDay header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.treemapTiles {
+  display: flex;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #eff4f7;
+}
+
+.treemapTile {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 100%;
+  color: #fff;
+  border-right: 1px solid #fff9;
+  text-align: center;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.treemapTile span {
+  max-width: 100%;
+  padding: 0 5px;
+  overflow-wrap: anywhere;
+}
+
+.treemapTile strong {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.lollipopRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 230px) minmax(100px, 1fr) 95px;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  font-size: 11px;
+}
+
+.lollipopRow > span {
+  overflow-wrap: anywhere;
+}
+
+.lollipopRow strong {
+  text-align: right;
+}
+
+.lollipopTrack {
+  height: 2px;
+  background: #e3eaf0;
+}
+
+.lollipopTrack > div {
+  position: relative;
+  height: 2px;
+}
+
+.lollipopTrack i {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #c7d2dd;
+}
+
 .empty,
 .loadError {
   padding: 38px 20px;
@@ -372,6 +497,12 @@
 /* Tablet and mobile adjustments */
 
 @media (max-width: 760px) {
+  .lollipopRow {
+    grid-template-columns: minmax(90px, 130px) minmax(70px, 1fr) 80px;
+    gap: 6px;
+    font-size: 10px;
+  }
+
   .dailyChartRow {
     grid-template-columns: minmax(0, 1fr) auto;
   }
